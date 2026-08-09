@@ -725,7 +725,7 @@ function consumptionField(car: CarInput): HTMLElement {
       title: STRINGS.energy.knownTitle,
       valueText: consumptionRangeText(car.kmPerLiter),
       note: car.consumptionIsGenericEstimate
-        ? STRINGS.energy.knownNoteGeneric(car.selectedModel)
+        ? STRINGS.energy.knownNoteGeneric
         : STRINGS.energy.knownNote,
       onUnlock: () => setStruct({ energyUnlocked: true }),
     });
