@@ -99,7 +99,7 @@ export const STRINGS = {
     downPaymentBalloonLabel: "סכום מקדמה",
     balloonWarning:
       "תשלום הבלון שהזנת גבוה יחסית למחיר הרכב (מעל 30%) - יכול להיות שיהיה קשה למחזר או לכסות אותו בסוף התקופה.",
-    balloonWarningDismiss: "הבנתי, אקח לתשומת ליבי",
+    balloonWarningDismiss: "תודה מלך",
   },
 
   copiedNotice: {
