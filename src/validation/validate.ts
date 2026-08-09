@@ -17,6 +17,7 @@ const NON_NEGATIVE_FIELDS: (keyof CarInput)[] = [
   "loanAmount",
   "annualInterestRate",
   "loanMonths",
+  "loanBalloonAmount",
   "kmPerYear",
   "kmPerLiter",
   "litersPer100",
@@ -78,6 +79,16 @@ export function plausibilityWarnings(input: CarInput): Warning[] {
     warnings.push({
       field: "kmPerYear",
       message: "מספר קילומטרים גבוה במיוחד לשנה. שווה לבדוק שוב.",
+    });
+  }
+  if (
+    input.hasLoan &&
+    toNumber(input.loanBalloonAmount) >
+      toNumber(input.purchasePrice) * PLAUSIBILITY.maxBalloonSharePct
+  ) {
+    warnings.push({
+      field: "loanBalloonAmount",
+      message: "תשלום הבלון שהזנת גבוה יחסית למחיר הרכב (מעל 30%) - יכול להיות שיהיה קשה למחזר או לכסות אותו בסוף התקופה.",
     });
   }
   return warnings;

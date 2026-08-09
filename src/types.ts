@@ -25,6 +25,10 @@ export interface CarInput {
   loanAmount: number;
   annualInterestRate: number; // שבר, למשל 0.08
   loanMonths: number;
+  /** סוג ההלוואה - שפיצר רגילה (ברירת מחדל) או הלוואת בלון */
+  loanType: "spitzer" | "balloon";
+  /** תשלום בסוף התקופה (רלוונטי רק כש-loanType==="balloon"; 0 אחרת) */
+  loanBalloonAmount: number;
 
   // ---- שלב 2: שימוש ----
   kmPerYear: number;
@@ -104,11 +108,13 @@ export interface FinancingResult {
   totalInterestFull: number;
   /** ריבית שנצברה בתוך תקופת ההחזקה בלבד */
   interestDuringHolding: number;
-  /** יתרת קרן בסוף תקופת ההחזקה (אם ההלוואה ארוכה מההחזקה) */
+  /** יתרת קרן בסוף תקופת ההחזקה (אם ההלוואה ארוכה מההחזקה) - כולל תשלום הבלון אם יש */
   remainingBalanceAtEnd: number;
   /** סך התשלומים ששולמו במהלך תקופת ההחזקה */
   paymentsDuringHolding: number;
   loanLongerThanHolding: boolean;
+  /** תשלום הבלון שהוזן (0 אם אין) - למידע בממשק בלבד */
+  balloonAmount: number;
 }
 
 export interface Warning {

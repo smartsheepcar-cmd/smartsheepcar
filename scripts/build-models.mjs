@@ -84,7 +84,16 @@ function fuelCo2(fuel, rec) {
 
 const rows = await fetchAll();
 
-// צבירה לפי יצרן|דגם|דלק
+// נירמול שם דגם להשוואה בלבד (איחוד כפילויות עיצוב: רווחים כפולים,
+// מקפים מול רווחים, "MAZDA3" מול "MAZDA 3" וכו') - לא משפיע על הטקסט
+// המוצג, רק על קיבוץ הרשומות של אותו רכב בפועל.
+function normModel(model) {
+  return model.toUpperCase().replace(/[^A-Z0-9א-ת]/g, "");
+}
+
+// צבירה לפי יצרן|דגם-מנורמל|דלק - מאחדת רשומות רישום שונות של אותו
+// רכב בפועל (המאגר הרשמי מכיל הרבה כפילויות עיצוביות כאלה), כדי
+// שכפילות ריקה מנתוני צריכה לא תסתיר כפילות אחות עם נתון אמיתי.
 const agg = new Map();
 for (const r of rows) {
   const make = (r.tozar || "").trim();
@@ -93,12 +102,13 @@ for (const r of rows) {
   if (isJunkModel(model)) continue;
   const fuel = mapFuel(r.delek_nm, r.technologiat_hanaa_nm);
   if (!fuel) continue;
-  const key = `${make}|${model}|${fuel}`;
+  const key = `${make}|${normModel(model)}|${fuel}`;
   let e = agg.get(key);
   if (!e) {
-    e = { make, model, fuel, co2: [] };
+    e = { make, fuel, co2: [], labelCounts: new Map() };
     agg.set(key, e);
   }
+  e.labelCounts.set(model, (e.labelCounts.get(model) || 0) + 1);
   const c = fuelCo2(fuel, r);
   if (c) e.co2.push(c);
 }
@@ -108,7 +118,9 @@ const makes = {};
 let count = 0;
 for (const e of agg.values()) {
   const cons = l100(e.fuel, median(e.co2));
-  (makes[e.make] ||= []).push([e.model, e.fuel, cons]);
+  // התווית המוצגת: איות הדגם הנפוץ ביותר מבין הכפילויות שאוחדו
+  const model = [...e.labelCounts.entries()].sort((a, b) => b[1] - a[1])[0][0];
+  (makes[e.make] ||= []).push([model, e.fuel, cons]);
   count++;
 }
 // מיון: יצרנים ודגמים לפי א-ב עברי

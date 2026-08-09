@@ -6,7 +6,13 @@
 
 import { el, clear } from "./dom";
 import { STRINGS } from "../strings";
-import { STEP_VIDEOS, FUEL_KM_PER_LITER_ESTIMATE, ESTIMATES } from "../config";
+import {
+  STEP_VIDEOS,
+  FUEL_KM_PER_LITER_ESTIMATE,
+  ESTIMATES,
+  WLTP_REAL_WORLD_FACTOR,
+  CONSUMPTION_DISPLAY_SPREAD,
+} from "../config";
 import { activeCar, patchActiveCar, setState, getState } from "../state/store";
 import { track } from "../analytics/track";
 import { numberField, segmented, infoIcon } from "./components";
@@ -79,8 +85,9 @@ function applyModel(car: CarInput, m: ModelEntry): void {
   if (m.fuel !== "e") {
     changes.consumptionUnit = "kmPerLiter";
     if (m.l100 != null && m.l100 > 0) {
-      // המרה מל/100 ק"מ לק"מ-לליטר (המחשבון עובד בק"מ/ליטר בלבד)
-      changes.kmPerLiter = Math.round((100 / m.l100) * 10) / 10;
+      // המרה מל/100 ק"מ לק"מ-לליטר, עם תיקון לצריכה בפועל (לא רק
+      // ערך מעבדה) - ראו WLTP_REAL_WORLD_FACTOR
+      changes.kmPerLiter = Math.round((100 / m.l100 / WLTP_REAL_WORLD_FACTOR) * 10) / 10;
     } else {
       // אין נתון WLTP רשמי לדגם הזה (קורה לכ-28% מהדגמים הלא-חשמליים) -
       // עדיין נועלים ומסמנים כהערכה, אבל לפי סוג הדלק בלבד, ולא משאירים
@@ -569,7 +576,7 @@ function renderStep1(car: CarInput): HTMLElement {
       onChange: (v) =>
         v === "yes"
           ? setStruct({ hasLoan: true })
-          : setStruct({ hasLoan: false, loanAmount: 0, loanMonths: 0 }),
+          : setStruct({ hasLoan: false, loanAmount: 0, loanMonths: 0, loanType: "spitzer", loanBalloonAmount: 0 }),
     }),
   ];
   if (car.hasLoan) {
@@ -579,16 +586,29 @@ function renderStep1(car: CarInput): HTMLElement {
     const downPaymentField = numberField({
       fieldKey: "downPayment",
       value: car.downPayment,
+      labelOverride: car.loanType === "balloon" ? STRINGS.loan.downPaymentBalloonLabel : undefined,
       onChange: (v) => {
         set("downPayment", v);
         syncLoanAmount(activeCar().purchasePrice, v);
       },
     });
     loanFields.push(
+      segmented<"spitzer" | "balloon">({
+        legend: STRINGS.loan.typeQuestion,
+        name: "loanType",
+        value: car.loanType,
+        options: [
+          { value: "spitzer", label: STRINGS.loan.typeSpitzer },
+          { value: "balloon", label: STRINGS.loan.typeBalloon },
+        ],
+        onChange: (v) =>
+          setStruct(v === "balloon" ? { loanType: v } : { loanType: v, loanBalloonAmount: 0 }),
+      }),
       downPaymentField,
       loanAmountField,
       pctField(car, "annualInterestRate"),
-      numField(car, "loanMonths")
+      numField(car, "loanMonths"),
+      car.loanType === "balloon" ? numField(car, "loanBalloonAmount") : null
     );
   }
 
@@ -612,7 +632,7 @@ function renderStep1(car: CarInput): HTMLElement {
 function lockedField(opts: {
   title: string;
   valueText: string;
-  note: string;
+  note: string | Node;
   onUnlock: () => void;
 }): HTMLElement {
   return el(
@@ -638,9 +658,13 @@ function lockedField(opts: {
   );
 }
 
-const CURRENT_MONTH_YEAR_HE = new Intl.DateTimeFormat("he-IL", { month: "long", year: "numeric" }).format(
-  new Date()
-);
+/** מציג טווח סביב הערכת הצריכה (ולא מספר יחיד) - הצריכה בפועל תלויה בסגנון נהיגה, דגם מדויק ושנתון */
+function consumptionRangeText(central: number): string {
+  let low = Math.round(central * (1 - CONSUMPTION_DISPLAY_SPREAD));
+  let high = Math.round(central * (1 + CONSUMPTION_DISPLAY_SPREAD));
+  if (low === high) high = low + 1;
+  return `${formatNumber(low)}-${formatNumber(high)} ${STRINGS.energy.knownValue}`;
+}
 
 /** צריכת דלק - נעולה כשידועה מהדגם, עם כפתור לפתיחת עריכה ידנית */
 function consumptionField(car: CarInput): HTMLElement {
@@ -650,10 +674,10 @@ function consumptionField(car: CarInput): HTMLElement {
   if (knownFromModel) {
     return lockedField({
       title: STRINGS.energy.knownTitle,
-      valueText: `${formatNumber(car.kmPerLiter, 1)} ${STRINGS.energy.knownValue}`,
+      valueText: consumptionRangeText(car.kmPerLiter),
       note: car.consumptionIsGenericEstimate
         ? STRINGS.energy.knownNoteGeneric(car.selectedModel)
-        : STRINGS.energy.knownNote(car.selectedModel),
+        : STRINGS.energy.knownNote,
       onUnlock: () => setStruct({ energyUnlocked: true }),
     });
   }
@@ -668,7 +692,13 @@ function fuelPriceField(car: CarInput): HTMLElement {
     return lockedField({
       title: STRINGS.energy.fuelPriceTitle,
       valueText: `${formatNumber(car.fuelPricePerLiter, 2)} ₪`,
-      note: STRINGS.energy.fuelPriceNote(CURRENT_MONTH_YEAR_HE),
+      note: el(
+        "span",
+        {},
+        `${STRINGS.energy.fuelPriceNotePrefix} `,
+        el("strong", {}, STRINGS.energy.fuelPriceNoteBold),
+        ` ${STRINGS.energy.fuelPriceNoteSuffix}`
+      ),
       onUnlock: () => setStruct({ fuelPriceUnlocked: true }),
     });
   }

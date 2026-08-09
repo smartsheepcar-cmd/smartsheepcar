@@ -172,6 +172,8 @@ export function addCar(): void {
     downPayment: source.downPayment,
     annualInterestRate: source.annualInterestRate,
     loanMonths: source.loanMonths,
+    loanType: source.loanType,
+    loanBalloonAmount: source.loanBalloonAmount,
     loanAmount: Math.max(0, fresh.purchasePrice - source.downPayment),
     copiedFromPreviousCar: source.holdingYears > 0 || source.hasLoan,
     kmPerYear: source.kmPerYear,

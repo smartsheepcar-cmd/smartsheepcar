@@ -136,12 +136,19 @@ function splitCard(r: CarResult): HTMLElement {
     );
 
   const allCars = getState().cars;
+  const allResults = allCars.length >= 2 ? allCars.map(computeCarResult) : [r];
   const breakdownContent =
-    allCars.length >= 2 ? categoryBreakdownTable(allCars.map(computeCarResult)) : additionalBreakdown(r);
+    allCars.length >= 2 ? categoryBreakdownTable(allResults) : additionalBreakdown(r);
+  const usedFinancing = allResults.some((car) => car.financing.interestDuringHolding > 0);
   const breakdownWrap = el(
     "div",
     { class: "breakdown-wrap" },
-    el("div", { class: "breakdown-wrap__inner" }, breakdownContent)
+    el(
+      "div",
+      { class: "breakdown-wrap__inner" },
+      breakdownContent,
+      usedFinancing ? el("p", { class: "breakdown__finance-note" }, STRINGS.results.financingMethodNote) : null
+    )
   );
   let open = false;
   const toggleBtn = el(
