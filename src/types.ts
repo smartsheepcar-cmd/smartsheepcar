@@ -29,6 +29,8 @@ export interface CarInput {
   loanType: "spitzer" | "balloon";
   /** תשלום בסוף התקופה (רלוונטי רק כש-loanType==="balloon"; 0 אחרת) */
   loanBalloonAmount: number;
+  /** האזהרה על בלון גבוה יחסית למחיר הרכב נסגרה ע"י המשתמש (inline בשלב 1) */
+  loanBalloonWarningDismissed: boolean;
 
   // ---- שלב 2: שימוש ----
   kmPerYear: number;

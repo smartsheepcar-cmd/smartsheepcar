@@ -81,17 +81,26 @@ export function plausibilityWarnings(input: CarInput): Warning[] {
       message: "מספר קילומטרים גבוה במיוחד לשנה. שווה לבדוק שוב.",
     });
   }
+  return warnings;
+}
+
+/**
+ * אזהרה רכה כשתשלום הבלון גבוה יחסית למחיר הרכב - מוצגת inline בשלב 1
+ * (אזור המימון) בזמן המילוי, ולא באזהרות הכלליות במסך התוצאות.
+ */
+export function balloonPlausibilityWarning(input: CarInput): Warning | null {
   if (
     input.hasLoan &&
+    input.loanType === "balloon" &&
     toNumber(input.loanBalloonAmount) >
       toNumber(input.purchasePrice) * PLAUSIBILITY.maxBalloonSharePct
   ) {
-    warnings.push({
+    return {
       field: "loanBalloonAmount",
       message: "תשלום הבלון שהזנת גבוה יחסית למחיר הרכב (מעל 30%) - יכול להיות שיהיה קשה למחזר או לכסות אותו בסוף התקופה.",
-    });
+    };
   }
-  return warnings;
+  return null;
 }
 
 export function validateCar(input: CarInput): {

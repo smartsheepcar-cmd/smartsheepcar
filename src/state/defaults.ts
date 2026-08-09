@@ -40,6 +40,7 @@ export function createDefaultCar(name = "הרכב שלי", id = newId()): CarInp
     loanMonths: 0,
     loanType: "spitzer",
     loanBalloonAmount: 0,
+    loanBalloonWarningDismissed: false,
 
     kmPerYear: 15000,
     consumptionUnit: "kmPerLiter",

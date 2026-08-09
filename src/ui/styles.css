@@ -269,6 +269,8 @@ p { letter-spacing: 0; }
 }
 .copied-notice p { margin: 0; font-size: 14px; color: var(--navy-dark); flex: 1 1 240px; }
 .copied-notice .link-btn { flex-shrink: 0; }
+.copied-notice--warning { background: #fff4e5; border-color: #f5d29a; }
+.copied-notice--warning p { color: #7a4f00; }
 
 /* Consent checkbox row (login) */
 .consent { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; color: var(--ink-soft); cursor: pointer; text-align: start; line-height: 1.4; margin: 4px 0 14px; }

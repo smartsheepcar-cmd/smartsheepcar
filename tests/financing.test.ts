@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { monthlyPayment, computeFinancing } from "../src/calc/financing";
-import { validateCar } from "../src/validation/validate";
+import { validateCar, balloonPlausibilityWarning } from "../src/validation/validate";
 import { car } from "./helpers";
 
 describe("monthlyPayment - הלוואת בלון", () => {
@@ -76,28 +76,55 @@ describe("computeFinancing - הלוואת בלון", () => {
   });
 });
 
-describe("אזהרת סבירות - בלון גבוה יחסית למחיר הרכב", () => {
-  it("מזהיר כשהבלון עולה על 30% ממחיר הרכב", () => {
+describe("אזהרת סבירות - בלון גבוה יחסית למחיר הרכב (inline בשלב 1, לא ברשימת האזהרות הכללית)", () => {
+  it("מזהיר כשהבלון עולה על 30% ממחיר הרכב ונבחרה הלוואת בלון", () => {
     const input = car({
       purchasePrice: 100000,
       hasLoan: true,
+      loanType: "balloon",
       loanAmount: 80000,
       annualInterestRate: 0.08,
       loanMonths: 48,
       loanBalloonAmount: 35000,
     });
-    const { warnings } = validateCar(input);
-    expect(warnings.some((w) => w.field === "loanBalloonAmount")).toBe(true);
+    expect(balloonPlausibilityWarning(input)).not.toBeNull();
   });
 
   it("לא מזהיר כשהבלון סביר (מתחת ל-30%)", () => {
     const input = car({
       purchasePrice: 100000,
       hasLoan: true,
+      loanType: "balloon",
       loanAmount: 80000,
       annualInterestRate: 0.08,
       loanMonths: 48,
       loanBalloonAmount: 15000,
+    });
+    expect(balloonPlausibilityWarning(input)).toBeNull();
+  });
+
+  it("לא מזהיר כשלא נבחרה הלוואת בלון (loanType===spitzer), גם אם הערך הישן גבוה", () => {
+    const input = car({
+      purchasePrice: 100000,
+      hasLoan: true,
+      loanType: "spitzer",
+      loanAmount: 80000,
+      annualInterestRate: 0.08,
+      loanMonths: 48,
+      loanBalloonAmount: 35000,
+    });
+    expect(balloonPlausibilityWarning(input)).toBeNull();
+  });
+
+  it("האזהרה הזו לא מופיעה יותר ברשימת האזהרות הכללית של validateCar", () => {
+    const input = car({
+      purchasePrice: 100000,
+      hasLoan: true,
+      loanType: "balloon",
+      loanAmount: 80000,
+      annualInterestRate: 0.08,
+      loanMonths: 48,
+      loanBalloonAmount: 35000,
     });
     const { warnings } = validateCar(input);
     expect(warnings.some((w) => w.field === "loanBalloonAmount")).toBe(false);

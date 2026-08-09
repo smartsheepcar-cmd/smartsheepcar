@@ -23,6 +23,7 @@ import { searchModels, FUEL_CODE_TO_TYPE, type ModelEntry } from "../data/models
 import { searchCities, drivingKm, type City } from "../data/cities";
 import { estimateInsurance, type InsuranceInput } from "../calc/insurance";
 import { estimateLicenseFee } from "../calc/licenseFee";
+import { balloonPlausibilityWarning } from "../validation/validate";
 import type { CarInput } from "../types";
 
 // ---- עוזרי עדכון ----
@@ -515,12 +516,13 @@ function videoButton(step: number): HTMLElement | null {
 function copiedNoticeEl(
   show: boolean,
   strings: { text: string; dismiss: string },
-  onDismiss: () => void
+  onDismiss: () => void,
+  variant?: "warning"
 ): HTMLElement | null {
   if (!show) return null;
   return el(
     "div",
-    { class: "copied-notice" },
+    { class: variant === "warning" ? "copied-notice copied-notice--warning" : "copied-notice" },
     el("p", {}, strings.text),
     el("button", { type: "button", class: "link-btn", onClick: onDismiss }, strings.dismiss)
   );
@@ -549,12 +551,24 @@ function renderStep1(car: CarInput): HTMLElement {
     }
   }
 
+  // אזהרת "בלון גבוה" - שדה הבלון ומחיר הרכב שניהם מעדכנים state בלי
+  // רינדור מלא (שמירת פוקוס), אז מרעננים את הבאנר ידנית בכל שינוי - בדיוק
+  // כמו רמז הטעות בכתובת המייל ב-login.ts.
+  let balloonWarningEl: HTMLElement | null = null;
+  function refreshBalloonWarning(): void {
+    if (!balloonWarningEl) return;
+    const fresh = activeCar();
+    const show = !fresh.loanBalloonWarningDismissed && !!balloonPlausibilityWarning(fresh);
+    balloonWarningEl.style.display = show ? "" : "none";
+  }
+
   const purchasePriceField = numberField({
     fieldKey: "purchasePrice",
     value: car.purchasePrice,
     onChange: (v) => {
       set("purchasePrice", v);
       if (car.hasLoan) syncLoanAmount(v, activeCar().downPayment);
+      refreshBalloonWarning();
     },
   });
 
@@ -576,7 +590,14 @@ function renderStep1(car: CarInput): HTMLElement {
       onChange: (v) =>
         v === "yes"
           ? setStruct({ hasLoan: true })
-          : setStruct({ hasLoan: false, loanAmount: 0, loanMonths: 0, loanType: "spitzer", loanBalloonAmount: 0 }),
+          : setStruct({
+              hasLoan: false,
+              loanAmount: 0,
+              loanMonths: 0,
+              loanType: "spitzer",
+              loanBalloonAmount: 0,
+              loanBalloonWarningDismissed: false,
+            }),
     }),
   ];
   if (car.hasLoan) {
@@ -592,6 +613,29 @@ function renderStep1(car: CarInput): HTMLElement {
         syncLoanAmount(activeCar().purchasePrice, v);
       },
     });
+
+    let balloonAmountField: HTMLElement | null = null;
+    if (car.loanType === "balloon") {
+      balloonAmountField = numberField({
+        fieldKey: "loanBalloonAmount",
+        value: car.loanBalloonAmount,
+        onChange: (v) => {
+          set("loanBalloonAmount", v);
+          refreshBalloonWarning();
+        },
+      });
+      balloonWarningEl = copiedNoticeEl(
+        true,
+        { text: STRINGS.loan.balloonWarning, dismiss: STRINGS.loan.balloonWarningDismiss },
+        () => setStruct({ loanBalloonWarningDismissed: true }),
+        "warning"
+      );
+      if (balloonWarningEl) {
+        const show = !car.loanBalloonWarningDismissed && !!balloonPlausibilityWarning(car);
+        balloonWarningEl.style.display = show ? "" : "none";
+      }
+    }
+
     loanFields.push(
       segmented<"spitzer" | "balloon">({
         legend: STRINGS.loan.typeQuestion,
@@ -602,13 +646,18 @@ function renderStep1(car: CarInput): HTMLElement {
           { value: "balloon", label: STRINGS.loan.typeBalloon },
         ],
         onChange: (v) =>
-          setStruct(v === "balloon" ? { loanType: v } : { loanType: v, loanBalloonAmount: 0 }),
+          setStruct(
+            v === "balloon"
+              ? { loanType: v }
+              : { loanType: v, loanBalloonAmount: 0, loanBalloonWarningDismissed: false }
+          ),
       }),
       downPaymentField,
       loanAmountField,
       pctField(car, "annualInterestRate"),
       numField(car, "loanMonths"),
-      car.loanType === "balloon" ? numField(car, "loanBalloonAmount") : null
+      balloonAmountField,
+      balloonWarningEl
     );
   }
 
