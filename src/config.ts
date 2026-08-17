@@ -40,7 +40,7 @@ export const SOCIAL_LINKS = {
  * כל עוד השדה ריק, שליחת הליד מדולגת בשקט (login.ts) - לא שוברת את
  * תהליך הכניסה למחשבון.
  */
-export const MAKE_LEAD_WEBHOOK_URL = "https://hook.eu1.make.com/66jmeumb4b0ly9pdzjwhbbyysstovmce";
+export const MAKE_LEAD_WEBHOOK_URL = "https://hook.eu1.make.com/3xtzxg3jiq6svdqij8k2gjhyhsd83j6l";
 
 /**
  * כתובת ה-Webhook של Make לשליחת קוד האימות (OTP) ב-SMS אמיתי, דרך ספק
