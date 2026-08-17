@@ -1,11 +1,8 @@
 // ------------------------------------------------------------------
-// login.ts - שלב התחברות בכניסה: פרטים (שם, טלפון, מייל, אישור דיוור)
-// ואז קוד OTP.
-//
-// שליחת ה-SMS: אם MAKE_OTP_WEBHOOK_URL מוגדר (config.ts) נשלח קוד אמיתי
-// דרך Make; אחרת נופלים למצב דמו (הקוד מוצג על המסך). אימות הקוד עצמו
-// תמיד נשאר בצד לקוח בלבד (משווים למה שנוצר כאן) - זה שער רך ללידים,
-// לא מערכת אבטחה, אז זה מספיק.
+// login.ts - שלב התחברות בכניסה: פרטים (שם, טלפון, מייל, אישור דיוור).
+// אין שלב אימות SMS - זה שער רך ללידים, לא מערכת אבטחה, אז אין צורך.
+// הליד נשלח ל-Webhook (ראו integrations/leads.ts) והכניסה למחשבון
+// מיידית לאחר מילוי הפרטים.
 // ------------------------------------------------------------------
 
 import { el, mount } from "./dom";
@@ -14,13 +11,12 @@ import { markLoggedIn } from "../state/store";
 import { track } from "../analytics/track";
 import { isValidIsraeliMobile, isValidEmail, suggestEmailDomain } from "../format/format";
 import { sendLeadToWebhook } from "../integrations/leads";
-import { sendOtpSms, otpSmsConfigured } from "../integrations/otp";
 
 const L = STRINGS.login;
 
 export function renderLogin(): HTMLElement {
   const root = el("div", { class: "login-wrap" });
-  const data = { name: "", phone: "", email: "", consent: false, code: "", gen: "" };
+  const data = { name: "", phone: "", email: "", consent: false };
 
   const labeled = (labelText: string, control: HTMLElement): HTMLElement =>
     el(
@@ -85,12 +81,12 @@ export function renderLogin(): HTMLElement {
       }),
       el("span", {}, L.consent)
     );
-    const send = el(
+    const enter = el(
       "button",
       {
         type: "button",
         class: "btn btn--primary",
-        onClick: async () => {
+        onClick: () => {
           if (!isValidIsraeliMobile(data.phone)) {
             err.textContent = L.errPhone;
             return;
@@ -104,31 +100,18 @@ export function renderLogin(): HTMLElement {
             return;
           }
           err.textContent = "";
-          data.gen = String(Math.floor(1000 + Math.random() * 9000));
-
-          if (!otpSmsConfigured()) {
-            // מצב דמו: אין Webhook מוגדר - עוברים ישר, הקוד יוצג על המסך
-            track("otp_requested");
-            mount(root, otpCard());
-            return;
-          }
-
-          (send as HTMLButtonElement).disabled = true;
-          const originalText = send.textContent;
-          send.textContent = "שולח קוד...";
-          const ok = await sendOtpSms(data.phone, data.gen);
-          (send as HTMLButtonElement).disabled = false;
-          send.textContent = originalText;
-
-          if (!ok) {
-            err.textContent = L.errSendFailed;
-            return;
-          }
-          track("otp_requested");
-          mount(root, otpCard());
+          track("login_completed");
+          const lead = {
+            name: data.name,
+            phone: data.phone,
+            email: data.email,
+            marketingConsent: data.consent,
+          };
+          sendLeadToWebhook(lead); // ירי-וסיום: לא חוסם את הכניסה למחשבון
+          markLoggedIn(lead);
         },
       },
-      L.sendCode
+      L.verify
     );
     return el(
       "section",
@@ -146,68 +129,7 @@ export function renderLogin(): HTMLElement {
       ),
       consentBox,
       err,
-      send
-    );
-  }
-
-  function otpCard(): HTMLElement {
-    const err = el("div", { class: "field__error", role: "alert" });
-    const codeInput = el("input", {
-      class: "field__input",
-      type: "text",
-      inputmode: "numeric",
-      maxlength: "6",
-      placeholder: L.otpPlaceholder,
-      onInput: (e: Event) => (data.code = (e.target as HTMLInputElement).value),
-    });
-    const verify = el(
-      "button",
-      {
-        type: "button",
-        class: "btn btn--primary",
-        onClick: () => {
-          if (data.code.replace(/\D/g, "").length < 4) {
-            err.textContent = L.errCode;
-            return;
-          }
-          track("login_completed");
-          const lead = {
-            name: data.name,
-            phone: data.phone,
-            email: data.email,
-            marketingConsent: data.consent,
-          };
-          sendLeadToWebhook(lead); // ירי-וסיום: לא חוסם את הכניסה למחשבון
-          markLoggedIn(lead);
-        },
-      },
-      L.verify
-    );
-    const back = el(
-      "button",
-      { type: "button", class: "login__back", onClick: () => mount(root, detailsCard()) },
-      L.back
-    );
-    const demoBlock = !otpSmsConfigured()
-      ? el(
-          "p",
-          { class: "login__demo" },
-          `${L.demoCode} `,
-          el("strong", {}, data.gen),
-          el("br"),
-          L.demoNote
-        )
-      : null;
-    return el(
-      "section",
-      { class: "card login-card" },
-      el("h2", { class: "login-card__title" }, L.otpTitle),
-      el("p", { class: "login-card__subtitle" }, L.otpSubtitle),
-      demoBlock,
-      labeled("", codeInput),
-      err,
-      verify,
-      back
+      enter
     );
   }
 

@@ -27,7 +27,7 @@ function fillDetails(app: HTMLElement, opts: { name?: string; phone?: string; em
   }
 }
 
-describe("התחברות עם OTP (jsdom)", () => {
+describe("התחברות (jsdom) - ללא שלב אימות SMS", () => {
   beforeEach(() => {
     try {
       localStorage.clear();
@@ -41,15 +41,15 @@ describe("התחברות עם OTP (jsdom)", () => {
     const inputs = app.querySelectorAll("input.field__input");
     expect(inputs.length).toBe(3);
     expect(app.querySelector('input[type="checkbox"]')).toBeTruthy();
-    expect(app.querySelector(".btn--primary")?.textContent).toContain("שליחת קוד");
+    expect(app.querySelector(".btn--primary")?.textContent).toContain("כניסה למחשבון");
   });
 
-  it("טלפון לא תקין (קצר מדי) מציג שגיאה ולא ממשיך", () => {
+  it("טלפון לא תקין (קצר מדי) מציג שגיאה ולא נכנסים", () => {
     const app = mountLogin();
     fillDetails(app, { name: "א", phone: "123", email: "a@b.com", consent: true });
     (app.querySelector(".btn--primary") as HTMLElement).click();
     expect(app.querySelector(".field__error")?.textContent).toBeTruthy();
-    expect(app.querySelector(".login__demo")).toBeFalsy();
+    expect(getState().loggedIn).toBe(false);
   });
 
   it("טלפון עם יותר מדי ספרות (11) נדחה - הבאג המקורי", () => {
@@ -57,7 +57,7 @@ describe("התחברות עם OTP (jsdom)", () => {
     fillDetails(app, { name: "א", phone: "05012345678", email: "a@b.com", consent: true }); // 11 digits
     (app.querySelector(".btn--primary") as HTMLElement).click();
     expect(app.querySelector(".field__error")?.textContent).toBeTruthy();
-    expect(app.querySelector(".login__demo")).toBeFalsy();
+    expect(getState().loggedIn).toBe(false);
   });
 
   it("מייל לא תקין נדחה", () => {
@@ -65,40 +65,23 @@ describe("התחברות עם OTP (jsdom)", () => {
     fillDetails(app, { name: "א", phone: "0501234567", email: "not-an-email", consent: true });
     (app.querySelector(".btn--primary") as HTMLElement).click();
     expect(app.querySelector(".field__error")?.textContent).toBeTruthy();
-    expect(app.querySelector(".login__demo")).toBeFalsy();
+    expect(getState().loggedIn).toBe(false);
   });
 
-  it("בלי אישור דיוור לא ממשיכים", () => {
+  it("בלי אישור דיוור לא נכנסים", () => {
     const app = mountLogin();
     fillDetails(app, { name: "א", phone: "0501234567", email: "a@b.com", consent: false });
     (app.querySelector(".btn--primary") as HTMLElement).click();
     expect(app.querySelector(".field__error")?.textContent).toBeTruthy();
-    expect(app.querySelector(".login__demo")).toBeFalsy();
+    expect(getState().loggedIn).toBe(false);
   });
 
-  it("זרימה מלאה: פרטים -> קוד -> כניסה למחשבון", () => {
+  it("פרטים תקינים -> כניסה מיידית למחשבון, בלי שלב אימות", () => {
     const app = mountLogin();
     fillDetails(app, { name: "ישראל ישראלי", phone: "050-1234567", email: "israel@test.com", consent: true });
     (app.querySelector(".btn--primary") as HTMLElement).click();
 
-    const demo = app.querySelector(".login__demo strong");
-    expect(demo).toBeTruthy();
-    const code = demo!.textContent!;
-    expect(code).toMatch(/^\d{4}$/);
-
-    setVal(app.querySelector("input.field__input")!, code);
-    (app.querySelector(".btn--primary") as HTMLElement).click();
-
     expect(getState().loggedIn).toBe(true);
     expect(getState().view).toBe("wizard");
-  });
-
-  it("קוד קצר מדי לא מאפשר כניסה", () => {
-    const app = mountLogin();
-    fillDetails(app, { name: "א", phone: "0501234567", email: "a@b.com", consent: true });
-    (app.querySelector(".btn--primary") as HTMLElement).click();
-    setVal(app.querySelector("input.field__input")!, "12");
-    (app.querySelector(".btn--primary") as HTMLElement).click();
-    expect(app.querySelector(".field__error")?.textContent).toBeTruthy();
   });
 });

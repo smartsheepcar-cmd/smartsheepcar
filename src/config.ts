@@ -43,25 +43,6 @@ export const SOCIAL_LINKS = {
 export const MAKE_LEAD_WEBHOOK_URL = "https://hook.eu1.make.com/3xtzxg3jiq6svdqij8k2gjhyhsd83j6l";
 
 /**
- * כתובת ה-Webhook של Make לשליחת קוד האימות (OTP) ב-SMS אמיתי, דרך ספק
- * SMS (למשל Paycall/Multisend). כל עוד השדה ריק, קוד האימות מוצג על
- * המסך במקום להישלח (מצב דמו) - כדי שהאשף עדיין אפשר לבדוק בלי SMS אמיתי.
- *
- * הגדרה חד-פעמית ב-Make.com:
- *   1. New Scenario -> טריגר ראשון: "Webhooks" -> "Custom webhook" -> Add
- *      (Make ייתן כתובת URL - זו הכתובת שיש להדביק כאן למטה).
- *   2. מודול שני: "HTTP" -> "Make a request" (רוב ספקי ה-SMS הישראליים
- *      אין להם אפליקציית Make ייעודית, אז קוראים ל-API שלהם ישירות).
- *      כתובת ה-API, מפתח ה-API והפרמטרים המדויקים מגיעים מספק ה-SMS
- *      שלכם (בקשו את מדריך ה-API העדכני מהתמיכה שלהם - זה כן ספציפי
- *      לכל ספק). ממפים את phone ו-code שמגיעים מה-Webhook לתוך גוף
- *      הבקשה, ומזינים את מפתח ה-API של הספק ישירות במודול (נשאר בצד
- *      Make בלבד - לא נחשף בקוד האתר).
- *   3. שומרים את התרחיש (Scenario) ומפעילים אותו (Activate).
- */
-export const MAKE_OTP_WEBHOOK_URL = "";
-
-/**
  * תמונת האיש בפופ-אפ הקורס: קובץ public/founder.jpg (ראו ui/course.ts).
  * כל עוד הקובץ לא קיים, נופלים אוטומטית לדמות המסקוט (onerror ב-course.ts).
  */
