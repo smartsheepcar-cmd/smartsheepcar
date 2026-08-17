@@ -45,6 +45,33 @@ describe("בוחר הדגם (אינטגרציה, jsdom)", () => {
     expect(car.estimated.kmPerLiter).toBe(true);
   });
 
+  it("בחירת דגם ללא נתון WLTP רשמי לא ממציאה מספר - משאירה שדה פתוח עם הסבר", () => {
+    const app = mountWizard();
+    const input = app.querySelector(".combo__wrap input.field__input") as HTMLInputElement;
+    input.value = "מזדה lantis";
+    input.dispatchEvent(new Event("input"));
+
+    const items = app.querySelectorAll(".combo__item");
+    expect(items.length).toBeGreaterThan(0);
+    (items[0] as HTMLElement).dispatchEvent(
+      new MouseEvent("mousedown", { bubbles: true, cancelable: true })
+    );
+
+    const car = activeCar();
+    expect(car.consumptionIsGenericEstimate).toBe(true);
+    expect(car.kmPerLiter).toBe(0);
+    expect(car.estimated.kmPerLiter).toBeFalsy();
+
+    setState({ step: 2 });
+    const app2 = mountWizard();
+    expect(app2.textContent).toContain(
+      "לא הצלחתי להוציא את הנתון הרשמי מהמאגר"
+    );
+    // שדה הצריכה עצמו לא נעול (בניגוד למחיר הדלק, שנשאר נעול) - פתוח לעריכה חופשית
+    const lockedBoxes = [...app2.querySelectorAll(".locked")];
+    expect(lockedBoxes.some((el) => el.textContent?.includes('ק"מ לליטר'))).toBe(false);
+  });
+
   it("בחירת רכב חשמלי (טסלה) מגדירה fuelType חשמלי", () => {
     const app = mountWizard();
     const input = app.querySelector(".combo__wrap input.field__input") as HTMLInputElement;

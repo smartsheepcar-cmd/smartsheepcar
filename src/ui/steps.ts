@@ -8,8 +8,6 @@ import { el, clear } from "./dom";
 import { STRINGS } from "../strings";
 import {
   STEP_VIDEOS,
-  FUEL_KM_PER_LITER_ESTIMATE,
-  ESTIMATES,
   WLTP_REAL_WORLD_FACTOR,
   CONSUMPTION_DISPLAY_SPREAD,
 } from "../config";
@@ -89,14 +87,14 @@ function applyModel(car: CarInput, m: ModelEntry): void {
       // המרה מל/100 ק"מ לק"מ-לליטר, עם תיקון לצריכה בפועל (לא רק
       // ערך מעבדה) - ראו WLTP_REAL_WORLD_FACTOR
       changes.kmPerLiter = Math.round((100 / m.l100 / WLTP_REAL_WORLD_FACTOR) * 10) / 10;
+      estimated.kmPerLiter = true;
     } else {
-      // אין נתון WLTP רשמי לדגם הזה (קורה לכ-28% מהדגמים הלא-חשמליים) -
-      // עדיין נועלים ומסמנים כהערכה, אבל לפי סוג הדלק בלבד, ולא משאירים
-      // שדה פתוח עם ברירת מחדל גנרית שנראית "לא מחושבת".
-      changes.kmPerLiter = FUEL_KM_PER_LITER_ESTIMATE[fuelType] ?? ESTIMATES.kmPerLiter;
+      // אין נתון WLTP רשמי לדגם הזה (קורה לכ-28% מהדגמים הלא-חשמליים,
+      // בעיקר דגמים ישנים/מיוחדים) - לא ממציאים מספר גנרי, משאירים את
+      // השדה פתוח לעריכה עם הסבר, ומבקשים מהמשתמש לחפש ולהזין בעצמו.
+      changes.kmPerLiter = 0;
       changes.consumptionIsGenericEstimate = true;
     }
-    estimated.kmPerLiter = true;
   }
   // שם הרכב נגזר תמיד מהדגם שנבחר - אין שדה שם נפרד לעריכה ידנית
   changes.name = m.label;
@@ -724,9 +722,7 @@ function consumptionField(car: CarInput): HTMLElement {
     return lockedField({
       title: STRINGS.energy.knownTitle,
       valueText: consumptionRangeText(car.kmPerLiter),
-      note: car.consumptionIsGenericEstimate
-        ? STRINGS.energy.knownNoteGeneric
-        : STRINGS.energy.knownNote,
+      note: STRINGS.energy.knownNote,
       onUnlock: () => setStruct({ energyUnlocked: true }),
     });
   }
@@ -836,6 +832,9 @@ function renderEnergyFields(car: CarInput): HTMLElement[] {
   if (isPlugin) fields.push(pctField(car, "pluginElectricShare"));
 
   if (!isElectric) {
+    if (car.selectedModel && car.consumptionIsGenericEstimate) {
+      fields.push(el("p", { class: "hint" }, STRINGS.energy.noDataNote));
+    }
     fields.push(consumptionField(car));
     fields.push(fuelPriceField(car));
   }
