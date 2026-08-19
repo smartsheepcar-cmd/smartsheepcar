@@ -30,6 +30,7 @@ export function renderLogin(): HTMLElement {
 
   function detailsCard(): HTMLElement {
     const err = el("div", { class: "field__error", role: "alert" });
+    const phoneErr = el("div", { class: "field__error", role: "alert" });
     const nameInput = el("input", {
       class: "field__input",
       type: "text",
@@ -88,9 +89,10 @@ export function renderLogin(): HTMLElement {
         class: "btn btn--primary",
         onClick: () => {
           if (!isValidIsraeliMobile(data.phone)) {
-            err.textContent = L.errPhone;
+            phoneErr.textContent = L.errPhone;
             return;
           }
+          phoneErr.textContent = "";
           if (!isValidEmail(data.email)) {
             err.textContent = L.errEmail;
             return;
@@ -120,6 +122,7 @@ export function renderLogin(): HTMLElement {
       el("p", { class: "login-card__subtitle" }, L.subtitle),
       labeled(L.name, nameInput),
       labeled(L.phone, phoneInput),
+      phoneErr,
       el(
         "div",
         { class: "field" },

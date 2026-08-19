@@ -43,20 +43,26 @@ export const SOCIAL_LINKS = {
 export const MAKE_LEAD_WEBHOOK_URL = "https://hook.eu1.make.com/3xtzxg3jiq6svdqij8k2gjhyhsd83j6l";
 
 /**
- * תמונת האיש בפופ-אפ הקורס: קובץ public/founder.jpg (ראו ui/course.ts).
- * כל עוד הקובץ לא קיים, נופלים אוטומטית לדמות המסקוט (onerror ב-course.ts).
+ * תמונת האיש בפופ-אפ הקורס ובכותרת: קובץ public/founder.jpg (ראו ui/course.ts,
+ * ui/app.ts). כל עוד הקובץ לא קיים, נופלים אוטומטית לדמות המסקוט (onerror).
  */
 
 /**
- * סרטוני הסבר לכל שלב באשף. הדביקו כאן קישור יוטיוב/וימאו לכל שלב.
- * שדה ריק => מוצג placeholder עדין במקום נגן.
- * הערה: בקישור התצוגה (Artifact) הטמעת יוטיוב חסומה; באתר האמיתי/Canva זה עובד.
+ * כתובת ה-Webhook של Make לשליחת סיכום התוצאות במייל, כשמשתמש לוחץ
+ * "שלח לי את התוצאות למייל" (ראו integrations/resultsEmail.ts).
+ *
+ * הגדרה חד-פעמית ב-Make.com (דומה להגדרת MAKE_LEAD_WEBHOOK_URL למעלה):
+ *   1. New Scenario -> טריגר ראשון: "Webhooks" -> "Custom webhook" -> Add.
+ *   2. מודול שני: "Email" -> "Send an Email" (או Gmail/Outlook, לפי החשבון
+ *      שמחובר ל-Make) - שולחים לכתובת email שמגיעה מה-Webhook, עם תוכן
+ *      שמרכיבים מהשדות carName / economicTotal / economicMonthly /
+ *      holdingYears / categories שמגיעים בגוף הבקשה.
+ *   3. שומרים את התרחיש ומפעילים אותו (Activate).
+ *
+ * כל עוד השדה ריק, הכפתור עדיין מוצג אך מציג הודעת שגיאה בלחיצה (לא
+ * נכשל בשקט - זו פעולה יזומה של המשתמש, בניגוד ללידים ברקע).
  */
-export const STEP_VIDEOS: Record<number, string> = {
-  1: "https://www.youtube.com/watch?v=J---aiyznGQ", // placeholder - סרטון חתולים עד קבלת הסרטונים
-  2: "https://www.youtube.com/watch?v=J---aiyznGQ",
-  3: "https://www.youtube.com/watch?v=J---aiyznGQ",
-};
+export const MAKE_RESULTS_EMAIL_WEBHOOK_URL = "";
 
 /** מפתח האחסון ב-localStorage */
 export const STORAGE_KEY = "hhbs_car_calc_v1";

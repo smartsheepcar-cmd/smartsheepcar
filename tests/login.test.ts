@@ -15,6 +15,10 @@ function mountLogin(): HTMLElement {
   return app;
 }
 
+function anyErrorText(app: HTMLElement): string {
+  return [...app.querySelectorAll(".field__error")].map((e) => e.textContent).join("");
+}
+
 function fillDetails(app: HTMLElement, opts: { name?: string; phone?: string; email?: string; consent?: boolean }): void {
   const inputs = app.querySelectorAll("input.field__input");
   if (opts.name != null) setVal(inputs[0], opts.name);
@@ -48,7 +52,7 @@ describe("התחברות (jsdom) - ללא שלב אימות SMS", () => {
     const app = mountLogin();
     fillDetails(app, { name: "א", phone: "123", email: "a@b.com", consent: true });
     (app.querySelector(".btn--primary") as HTMLElement).click();
-    expect(app.querySelector(".field__error")?.textContent).toBeTruthy();
+    expect(anyErrorText(app)).toBeTruthy();
     expect(getState().loggedIn).toBe(false);
   });
 
@@ -56,7 +60,7 @@ describe("התחברות (jsdom) - ללא שלב אימות SMS", () => {
     const app = mountLogin();
     fillDetails(app, { name: "א", phone: "05012345678", email: "a@b.com", consent: true }); // 11 digits
     (app.querySelector(".btn--primary") as HTMLElement).click();
-    expect(app.querySelector(".field__error")?.textContent).toBeTruthy();
+    expect(anyErrorText(app)).toBeTruthy();
     expect(getState().loggedIn).toBe(false);
   });
 
@@ -64,7 +68,7 @@ describe("התחברות (jsdom) - ללא שלב אימות SMS", () => {
     const app = mountLogin();
     fillDetails(app, { name: "א", phone: "0501234567", email: "not-an-email", consent: true });
     (app.querySelector(".btn--primary") as HTMLElement).click();
-    expect(app.querySelector(".field__error")?.textContent).toBeTruthy();
+    expect(anyErrorText(app)).toBeTruthy();
     expect(getState().loggedIn).toBe(false);
   });
 
@@ -72,8 +76,20 @@ describe("התחברות (jsdom) - ללא שלב אימות SMS", () => {
     const app = mountLogin();
     fillDetails(app, { name: "א", phone: "0501234567", email: "a@b.com", consent: false });
     (app.querySelector(".btn--primary") as HTMLElement).click();
-    expect(app.querySelector(".field__error")?.textContent).toBeTruthy();
+    expect(anyErrorText(app)).toBeTruthy();
     expect(getState().loggedIn).toBe(false);
+  });
+
+  it("שגיאת טלפון מוצגת בדיוק מתחת לשדה הטלפון, עם הניסוח החדש", () => {
+    const app = mountLogin();
+    fillDetails(app, { name: "א", phone: "123", email: "a@b.com", consent: true });
+    (app.querySelector(".btn--primary") as HTMLElement).click();
+
+    const fields = [...app.querySelectorAll(".field, .field__error")];
+    const phoneFieldIndex = fields.findIndex((f) => f.querySelector('input[type="tel"]'));
+    const errorIndex = fields.findIndex((f) => f.textContent?.includes("אופס"));
+    expect(errorIndex).toBe(phoneFieldIndex + 1);
+    expect(fields[errorIndex].textContent).toBe("אופס, הזנת נייד לא תקין");
   });
 
   it("פרטים תקינים -> כניסה מיידית למחשבון, בלי שלב אימות", () => {

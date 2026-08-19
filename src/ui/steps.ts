@@ -7,7 +7,6 @@
 import { el, clear } from "./dom";
 import { STRINGS } from "../strings";
 import {
-  STEP_VIDEOS,
   WLTP_REAL_WORLD_FACTOR,
   CONSUMPTION_DISPLAY_SPREAD,
 } from "../config";
@@ -459,55 +458,6 @@ function openInsuranceHelper(car: CarInput): void {
 
   close = openModal({ title: S.title, content });
   refresh();
-}
-
-// ---- סרטון הסבר לשלב ----
-function toEmbed(url: string): string | null {
-  if (!url) return null;
-  const yt = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([\w-]{11})/);
-  if (yt) return `https://www.youtube.com/embed/${yt[1]}`;
-  const vim = url.match(/vimeo\.com\/(\d+)/);
-  if (vim) return `https://player.vimeo.com/video/${vim[1]}`;
-  return url;
-}
-
-function openVideoModal(rawUrl: string): void {
-  const embed = toEmbed(rawUrl);
-  const content = el(
-    "div",
-    { class: "video-modal" },
-    embed
-      ? el(
-          "div",
-          { class: "video__frame" },
-          el("iframe", {
-            class: "video__iframe",
-            src: embed,
-            title: STRINGS.video.title,
-            allow: "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture",
-            allowfullscreen: "",
-            loading: "lazy",
-          })
-        )
-      : el("p", { class: "video__placeholder" }, STRINGS.video.placeholder),
-    el("p", { class: "video__catnote" }, STRINGS.video.catNote),
-    el(
-      "a",
-      { class: "video__direct", href: rawUrl, target: "_blank", rel: "noopener" },
-      STRINGS.video.watchDirect
-    )
-  );
-  openModal({ title: STRINGS.video.title, content });
-}
-
-function videoButton(step: number): HTMLElement | null {
-  const url = STEP_VIDEOS[step] || "";
-  if (!url) return null;
-  return el(
-    "button",
-    { type: "button", class: "video-btn no-print", onClick: () => openVideoModal(url) },
-    "▶ " + STRINGS.video.title
-  );
 }
 
 /** באנר "עשינו לך את החיים קלים" - ניתן לפיטור, למקומות שבהם נתונים הודבקו אוטומטית מהרכב הקודם */
@@ -983,8 +933,7 @@ export function renderWizard(): HTMLElement {
       "header",
       { class: "wizard__head" },
       el("h2", { class: "wizard__title" }, stepMeta.title),
-      el("p", { class: "wizard__subtitle" }, stepMeta.subtitle),
-      videoButton(step)
+      el("p", { class: "wizard__subtitle" }, stepMeta.subtitle)
     ),
     content,
     nav

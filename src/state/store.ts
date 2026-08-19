@@ -141,6 +141,18 @@ export function markLoggedIn(lead: {
   setState({ loggedIn: true, view: "wizard" });
 }
 
+/** פרטי המשתמש המחובר (שם/טלפון/מייל) - null אם לא מחוברים או שהשמירה נכשלה */
+export function getLoggedInLead(): { name: string; phone: string; email: string } | null {
+  try {
+    const raw = localStorage.getItem(AUTH_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return parsed?.email ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
 /** עדכון שדה ברכב הפעיל ללא רינדור מלא (מחזיר את הרכב המעודכן) */
 export function patchActiveCar(changes: Partial<CarInput>): CarInput {
   const cars = state.cars.slice();

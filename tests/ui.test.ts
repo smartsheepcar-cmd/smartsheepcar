@@ -83,11 +83,10 @@ describe("בוחר הדגם (אינטגרציה, jsdom)", () => {
     expect(activeCar().fuelType).toBe("electric");
   });
 
-  it("שלב 2 כולל כפתור עוזר ק\"מ ואזור סרטון", () => {
+  it("שלב 2 כולל כפתור עוזר ק\"מ", () => {
     setState({ step: 2 });
     const app = mountWizard();
     expect(app.querySelector(".km-help-btn")).toBeTruthy();
-    expect(app.querySelector(".video-btn")).toBeTruthy();
   });
 
   it("בחירת דגם נועלת את צריכת הדלק (וגם מחיר הדלק נעול בנפרד), וכפתור עריכה פותח רק את הצריכה", () => {
