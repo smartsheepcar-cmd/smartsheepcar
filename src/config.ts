@@ -62,7 +62,7 @@ export const MAKE_LEAD_WEBHOOK_URL = "https://hook.eu1.make.com/3xtzxg3jiq6svdqi
  * כל עוד השדה ריק, הכפתור עדיין מוצג אך מציג הודעת שגיאה בלחיצה (לא
  * נכשל בשקט - זו פעולה יזומה של המשתמש, בניגוד ללידים ברקע).
  */
-export const MAKE_RESULTS_EMAIL_WEBHOOK_URL = "";
+export const MAKE_RESULTS_EMAIL_WEBHOOK_URL = "https://hook.eu1.make.com/43afbhnw0bkuksc5n4xknwubgwir0ibm";
 
 /** מפתח האחסון ב-localStorage */
 export const STORAGE_KEY = "hhbs_car_calc_v1";
