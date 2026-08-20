@@ -210,14 +210,14 @@ function footer(): HTMLElement {
 
 /**
  * כפתור מרחף קבוע (בכל המסכים - כניסה, אשף, תוצאות) שמוביל לדף ההרשמה
- * לשיעור. ממוקם בפינה כדי לא להפריע לפלואו של המחשבון עצמו. שתי גרסאות
- * (למטה + למעלה-שמאל) כדי שלא יהיה סיכוי לפספס אותו.
+ * לשיעור. ממוקם למעלה-שמאל כדי לא להפריע לפלואו של המחשבון עצמו, עם
+ * פעימה קטנה כדי שלא יהיה סיכוי לפספס אותו.
  */
-function floatingCta(position: "bottom" | "top"): HTMLElement {
+function floatingCta(): HTMLElement {
   return el(
     "a",
     {
-      class: `floating-cta floating-cta--${position} no-print`,
+      class: "floating-cta no-print",
       href: CTA_URL,
       target: "_blank",
       rel: "noopener",
@@ -231,14 +231,7 @@ export function renderApp(): void {
   const root = document.getElementById("app");
   if (!root) return;
   if (getState().view === "login") {
-    mount(
-      root,
-      header(),
-      el("main", { class: "app-main" }, renderLogin()),
-      footer(),
-      floatingCta("bottom"),
-      floatingCta("top")
-    );
+    mount(root, header(), el("main", { class: "app-main" }, renderLogin()), footer(), floatingCta());
     return;
   }
   mount(
@@ -248,8 +241,7 @@ export function renderApp(): void {
     body(),
     socialCard(),
     footer(),
-    floatingCta("bottom"),
-    floatingCta("top")
+    floatingCta()
   );
 }
 
