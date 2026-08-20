@@ -35,7 +35,7 @@ function brandMark(): HTMLElement {
   });
 }
 
-/** תמונת נתנאל - פני המותג - עיגול קטן ליד הלוגו בכותרת */
+/** תמונת נתנאל - פני המותג - תגית פינתית מלבנית בכותרת, נפרדת מהלוגו המרכזי */
 function founderPhoto(): HTMLElement {
   return el("img", {
     // שם הקובץ מוטמע ישירות כמחרוזת ליטרלית (לא דרך קבוע מיובא) כדי
@@ -57,10 +57,11 @@ function header(): HTMLElement {
   return el(
     "header",
     { class: "app-header" },
+    founderPhoto(),
     el(
       "div",
       { class: "app-header__brand" },
-      el("div", { class: "app-header__avatars" }, brandMark(), founderPhoto()),
+      brandMark(),
       el("h1", { class: "app-header__brandname" }, STRINGS.brand),
       el("div", { class: "app-header__caption" }, STRINGS.appCaption)
     )
@@ -209,13 +210,14 @@ function footer(): HTMLElement {
 
 /**
  * כפתור מרחף קבוע (בכל המסכים - כניסה, אשף, תוצאות) שמוביל לדף ההרשמה
- * לשיעור. ממוקם בפינה כדי לא להפריע לפלואו של המחשבון עצמו.
+ * לשיעור. ממוקם בפינה כדי לא להפריע לפלואו של המחשבון עצמו. שתי גרסאות
+ * (למטה + למעלה-שמאל) כדי שלא יהיה סיכוי לפספס אותו.
  */
-function floatingCta(): HTMLElement {
+function floatingCta(position: "bottom" | "top"): HTMLElement {
   return el(
     "a",
     {
-      class: "floating-cta no-print",
+      class: `floating-cta floating-cta--${position} no-print`,
       href: CTA_URL,
       target: "_blank",
       rel: "noopener",
@@ -229,7 +231,14 @@ export function renderApp(): void {
   const root = document.getElementById("app");
   if (!root) return;
   if (getState().view === "login") {
-    mount(root, header(), el("main", { class: "app-main" }, renderLogin()), footer(), floatingCta());
+    mount(
+      root,
+      header(),
+      el("main", { class: "app-main" }, renderLogin()),
+      footer(),
+      floatingCta("bottom"),
+      floatingCta("top")
+    );
     return;
   }
   mount(
@@ -239,7 +248,8 @@ export function renderApp(): void {
     body(),
     socialCard(),
     footer(),
-    floatingCta()
+    floatingCta("bottom"),
+    floatingCta("top")
   );
 }
 

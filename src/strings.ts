@@ -125,7 +125,7 @@ export const STRINGS = {
     phonePlaceholder: "05X-XXXXXXX",
     email: "כתובת מייל",
     emailPlaceholder: "name@example.com",
-    consent: 'מאשר/ת לקבל תוכן שיווקי מ"ההגה בידיים שלי" - בלי לחפור, ואפשר תמיד להסיר את עצמכם 🐑',
+    consent: 'משאר/ת לקבל תוכן שיווקי מ"ההגה בידיים שלי". הסר דאגה מליבך, אנחנו לא חופרים ואפשר תמיד להסיר 🐑',
     verify: "כניסה למחשבון",
     errPhone: "אופס, הזנת נייד לא תקין",
     errEmail: "כתובת המייל לא נראית תקינה",
@@ -322,7 +322,7 @@ export const STRINGS = {
   },
 
   floatingCta: {
-    label: "הרשמה לשיעור הרכבים הגדול ללא עלות",
+    label: "לקנות רכב בלי טעויות",
   },
 
   compareNudge: {
