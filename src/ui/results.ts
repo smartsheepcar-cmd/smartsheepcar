@@ -5,14 +5,12 @@
 
 import { el } from "./dom";
 import { STRINGS } from "../strings";
-import { activeCar, getState, addCar, getLoggedInLead } from "../state/store";
+import { activeCar, getState, addCar } from "../state/store";
 import { computeCarResult } from "../calc/totals";
 import { formatCurrency, formatPercent } from "../format/format";
 import { SOCIAL_LINKS } from "../config";
 import { track } from "../analytics/track";
 import { categoryBreakdownTable } from "./comparison";
-import { carDisplayName } from "../state/defaults";
-import { sendResultsEmail, resultsEmailConfigured } from "../integrations/resultsEmail";
 import type { CarResult, CategoryKey } from "../types";
 
 function heroCard(r: CarResult): HTMLElement {
@@ -247,59 +245,6 @@ export function socialCard(): HTMLElement {
       link("facebook", SOCIAL_LINKS.facebook, S.facebook)
     )
   );
-}
-
-/**
- * כפתור "שלח לי את התוצאות למייל" - עובד גם על רכב יחיד וגם על השוואה
- * (שולח את כל הרכבים הפעילים כרגע). מציג משוב הצלחה/כישלון, כי זו
- * פעולה יזומה של המשתמש - לא ירי-וסיום שקט כמו הליד בכניסה.
- */
-export function emailResultsSection(): HTMLElement {
-  const E = STRINGS.results;
-  const status = el("p", { class: "email-results__status", role: "status" });
-  const btn = el(
-    "button",
-    {
-      type: "button",
-      class: "btn btn--ghost no-print",
-      onClick: async () => {
-        const lead = getLoggedInLead();
-        if (!lead || !resultsEmailConfigured()) {
-          status.textContent = E.emailFailed;
-          return;
-        }
-        (btn as HTMLButtonElement).disabled = true;
-        const original = btn.textContent;
-        btn.textContent = E.emailSending;
-        status.textContent = "";
-
-        const cars = getState().cars.map((car) => {
-          const r = computeCarResult(car);
-          return {
-            name: carDisplayName(car, E.title),
-            purchasePrice: r.input.purchasePrice,
-            economicTotal: r.economicTotal,
-            economicMonthly: r.economicMonthly,
-            holdingYears: r.input.holdingYears,
-            categories: r.categories
-              .filter((c) => c.total > 0)
-              .map((c) => ({
-                label: STRINGS.categories[c.key as CategoryKey],
-                total: c.total,
-                monthly: c.monthly,
-              })),
-          };
-        });
-
-        const ok = await sendResultsEmail({ email: lead.email, name: lead.name, cars });
-        (btn as HTMLButtonElement).disabled = false;
-        btn.textContent = original;
-        status.textContent = ok ? E.emailSent : E.emailFailed;
-      },
-    },
-    E.emailButton
-  );
-  return el("div", { class: "email-results no-print" }, btn, status);
 }
 
 export function renderResults(): HTMLElement {

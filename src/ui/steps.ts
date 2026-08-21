@@ -16,7 +16,7 @@ import { numberField, segmented, infoIcon } from "./components";
 import { parseNumberInput, formatNumber, toNumber } from "../format/format";
 import { openModal } from "./modal";
 import { showCoursePopup } from "./course";
-import { searchModels, FUEL_CODE_TO_TYPE, type ModelEntry } from "../data/models";
+import { searchModelGroups, FUEL_CODE_TO_TYPE, type ModelEntry, type ModelGroup } from "../data/models";
 import { searchCities, drivingKm, type City } from "../data/cities";
 import { estimateInsurance, type InsuranceInput } from "../calc/insurance";
 import { estimateLicenseFee } from "../calc/licenseFee";
@@ -102,28 +102,31 @@ function applyModel(car: CarInput, m: ModelEntry): void {
   setState({}); // רינדור מלא - מעדכן סוג רכב וחושף שדות אנרגיה מתאימים
 }
 
-/** שנתון הרכב - שדה ללא פסיקי אלפים (זו שנה, לא סכום) */
+/** שנתון הרכב - דרופדאון פשוט (שנה נוכחית עד 30 שנה אחורה), לא שדה חופשי */
 function carYearField(car: CarInput): HTMLElement {
   const f = STRINGS.fields.carYear;
-  const input = el("input", {
-    type: "text",
-    inputmode: "numeric",
-    class: "field__input",
-    maxlength: "4",
-    value: car.carYear ? String(car.carYear) : "",
-    placeholder: String(new Date().getFullYear()),
-    onInput: (e: Event) => {
-      const target = e.target as HTMLInputElement;
-      const digits = target.value.replace(/\D/g, "").slice(0, 4);
-      if (digits !== target.value) target.value = digits;
-      set("carYear", digits ? parseInt(digits, 10) : 0);
+  const currentYear = new Date().getFullYear();
+  const minYear = currentYear - 30;
+  const options: HTMLElement[] = [
+    el("option", { value: "" }, "בחרו שנתון"),
+  ];
+  for (let y = currentYear; y >= minYear; y--) {
+    options.push(el("option", { value: String(y), selected: car.carYear === y }, String(y)));
+  }
+  const select = el(
+    "select",
+    {
+      class: "field__input",
+      onChange: (e: Event) =>
+        set("carYear", parseInt((e.target as HTMLSelectElement).value, 10) || 0),
     },
-  });
+    ...options
+  );
   return el(
     "div",
     { class: "field" },
     el("div", { class: "field__labelrow" }, el("label", { class: "field__label" }, f.label), infoIcon(f.info)),
-    el("div", { class: "field__control" }, input)
+    el("div", { class: "field__control" }, select)
   );
 }
 
@@ -140,37 +143,57 @@ function modelPicker(car: CarInput): HTMLElement {
   const list = el("ul", { class: "combo__list", role: "listbox" });
   list.style.display = "none";
 
-  const renderList = (items: ModelEntry[]) => {
+  const modelRow = (m: ModelEntry, sub = false): HTMLElement =>
+    el(
+      "li",
+      {
+        class: sub ? "combo__item combo__item--sub" : "combo__item",
+        role: "option",
+        // mousedown לפני blur כדי שהבחירה תיקלט
+        onMousedown: (e: Event) => {
+          e.preventDefault();
+          list.style.display = "none";
+          applyModel(car, m);
+        },
+      },
+      el("span", { class: "combo__name" }, m.label),
+      el("span", { class: "combo__fuel" }, STRINGS.fuelType.options[FUEL_CODE_TO_TYPE[m.fuel]])
+    );
+
+  const renderList = (groups: ModelGroup[]) => {
     clear(list);
-    if (items.length === 0) {
+    if (groups.length === 0) {
       list.style.display = "none";
       return;
     }
-    for (const m of items) {
-      list.appendChild(
-        el(
+    for (const g of groups) {
+      list.appendChild(modelRow(g.primary));
+      if (g.extras.length > 0) {
+        const extraRows = g.extras.map((m) => modelRow(m, true));
+        extraRows.forEach((row) => (row.style.display = "none"));
+        const toggle: HTMLElement = el(
           "li",
           {
-            class: "combo__item",
+            class: "combo__more",
             role: "option",
-            // mousedown לפני blur כדי שהבחירה תיקלט
             onMousedown: (e: Event) => {
               e.preventDefault();
-              list.style.display = "none";
-              applyModel(car, m);
+              extraRows.forEach((row) => (row.style.display = ""));
+              toggle.remove();
             },
           },
-          el("span", { class: "combo__name" }, m.label),
-          el("span", { class: "combo__fuel" }, STRINGS.fuelType.options[FUEL_CODE_TO_TYPE[m.fuel]])
-        )
-      );
+          STRINGS.modelPicker.moreSubmodels
+        );
+        list.appendChild(toggle);
+        extraRows.forEach((row) => list.appendChild(row));
+      }
     }
     list.style.display = "block";
   };
 
-  input.addEventListener("input", () => renderList(searchModels(input.value)));
+  input.addEventListener("input", () => renderList(searchModelGroups(input.value)));
   input.addEventListener("focus", () => {
-    if (input.value) renderList(searchModels(input.value));
+    if (input.value) renderList(searchModelGroups(input.value));
   });
   input.addEventListener("blur", () => setTimeout(() => (list.style.display = "none"), 150));
 

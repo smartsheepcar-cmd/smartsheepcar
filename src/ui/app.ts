@@ -17,7 +17,7 @@ import {
 } from "../state/store";
 import { track } from "../analytics/track";
 import { renderWizard } from "./steps";
-import { renderResults, socialCard, emailResultsSection } from "./results";
+import { renderResults, socialCard } from "./results";
 import { renderComparison } from "./comparison";
 import { renderLogin } from "./login";
 import { openModal } from "./modal";
@@ -194,8 +194,7 @@ function body(): HTMLElement {
     "main",
     { class: "app-main" },
     renderResults(),
-    state.cars.length >= 2 ? renderComparison() : null,
-    emailResultsSection()
+    state.cars.length >= 2 ? renderComparison() : null
   );
 }
 

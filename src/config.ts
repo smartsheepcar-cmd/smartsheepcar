@@ -47,23 +47,6 @@ export const MAKE_LEAD_WEBHOOK_URL = "https://hook.eu1.make.com/3xtzxg3jiq6svdqi
  * ui/app.ts). כל עוד הקובץ לא קיים, נופלים אוטומטית לדמות המסקוט (onerror).
  */
 
-/**
- * כתובת ה-Webhook של Make לשליחת סיכום התוצאות במייל, כשמשתמש לוחץ
- * "שלח לי את התוצאות למייל" (ראו integrations/resultsEmail.ts).
- *
- * הגדרה חד-פעמית ב-Make.com (דומה להגדרת MAKE_LEAD_WEBHOOK_URL למעלה):
- *   1. New Scenario -> טריגר ראשון: "Webhooks" -> "Custom webhook" -> Add.
- *   2. מודול שני: "Email" -> "Send an Email" (או Gmail/Outlook, לפי החשבון
- *      שמחובר ל-Make) - שולחים לכתובת email שמגיעה מה-Webhook, עם תוכן
- *      שמרכיבים מהשדות carName / economicTotal / economicMonthly /
- *      holdingYears / categories שמגיעים בגוף הבקשה.
- *   3. שומרים את התרחיש ומפעילים אותו (Activate).
- *
- * כל עוד השדה ריק, הכפתור עדיין מוצג אך מציג הודעת שגיאה בלחיצה (לא
- * נכשל בשקט - זו פעולה יזומה של המשתמש, בניגוד ללידים ברקע).
- */
-export const MAKE_RESULTS_EMAIL_WEBHOOK_URL = "https://hook.eu1.make.com/43afbhnw0bkuksc5n4xknwubgwir0ibm";
-
 /** מפתח האחסון ב-localStorage */
 export const STORAGE_KEY = "hhbs_car_calc_v1";
 
